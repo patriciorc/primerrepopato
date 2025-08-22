@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Gastos Completo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        input, select, button {
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #4cae4c;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        .gasto-item {
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            background-color: #f9f9f9;
+            position: relative; /* Para el botón de eliminar */
+        }
+        .gasto-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .gasto-header strong {
+            font-size: 1.1em;
+        }
+        .gasto-header span {
+            color: #555;
+            font-size: 0.9em;
+        }
+        .gasto-details {
+            font-size: 0.9em;
+            color: #777;
+        }
+        .tarjeta-section {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        .tarjeta-box {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
+        }
+        .tarjeta-box h2 {
+            margin-top: 0;
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 5px;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 5px;
+            margin-top: 8px;
+            height: 15px;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #4CAF50;
+            border-radius: 5px;
+            text-align: center;
+            color: white;
+            font-size: 10px;
+            line-height: 15px;
+        }
+        .cuotas-info {
+            font-size: 0.9em;
+            color: #555;
+        }
+        .pay-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 5px;
+            align-self: flex-start;
+        }
+        .pay-button:hover {
+            background-color: #0056b3;
+        }
+        .delete-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: transparent;
+            color: #d9534f;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 0;
+        }
+        .delete-button:hover {
+            color: #c9302c;
+        }
+        .total-gastos {
+            text-align: right;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-top: 10px;
+        }
+        .filter-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        #chart-container {
+            height: 300px;
+            margin-top: 20px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Mi Gestor de Gastos</h1>
+        
+        <form id="gasto-form">
+            <input type="text" id="descripcion" placeholder="Descripción del gasto" required>
+            <input type="number" id="monto" placeholder="Monto total" required>
+            <select id="categoria">
+                <option value="alimentacion">Alimentación</option>
+                <option value="transporte">Transporte</option>
+                <option value="ocio">Ocio</option>
+                <option value="servicios">Servicios</option>
+                <option value="otros">Otros</option>
+            </select>
+            <select id="metodo-pago">
+                <option value="efectivo">Efectivo</option>
+                <option value="visa">Tarjeta de Crédito (Visa)</option>
+                <option value="mastercard">Tarjeta de Crédito (Mastercard)</option>
+            </select>
+            <select id="cuotas" style="display:none;">
+                <option value="1">1 Cuota</option>
+                <option value="2">2 Cuotas</option>
+                <option value="3">3 Cuotas</option>
+                <option value="6">6 Cuotas</option>
+                <option value="12">12 Cuotas</option>
+            </select>
+            <button type="submit">Agregar Gasto</button>
+        </form>
+    </div>
+
+    <div class="container">
+        <h2>Análisis de Gastos</h2>
+        <div class="filter-container">
+            <label for="filtro-categoria">Filtrar por categoría:</label>
+            <select id="filtro-categoria">
+                <option value="todos">Todos</option>
+                <option value="alimentacion">Alimentación</option>
+                <option value="transporte">Transporte</option>
+                <option value="ocio">Ocio</option>
+                <option value="servicios">Servicios</option>
+                <option value="otros">Otros</option>
+            </select>
+        </div>
+        <div id="chart-container">
+            <canvas id="gastosChart"></canvas>
+        </div>
+    </div>
+
+    <div class="tarjeta-section container">
+        <div class="tarjeta-box">
+            <h2>Gastos en Efectivo</h2>
+            <ul id="lista-efectivo"></ul>
+            <div class="total-gastos">Total: $<span id="total-efectivo">0.00</span></div>
+        </div>
+        <div class="tarjeta-box">
+            <h2>Gastos Tarjeta Visa</h2>
+            <ul id="lista-visa"></ul>
+            <div class="total-gastos">Total: $<span id="total-visa">0.00</span></div>
+        </div>
+        <div class="tarjeta-box">
+            <h2>Gastos Tarjeta Mastercard</h2>
+            <ul id="lista-mastercard"></ul>
+            <div class="total-gastos">Total: $<span id="total-mastercard">0.00</span></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('gasto-form');
+        const listaEfectivo = document.getElementById('lista-efectivo');
+        const listaVisa = document.getElementById('lista-visa');
+        const listaMastercard = document.getElementById('lista-mastercard');
+        const metodoPagoSelect = document.getElementById('metodo-pago');
+        const cuotasSelect = document.getElementById('cuotas');
+        const totalEfectivoSpan = document.getElementById('total-efectivo');
+        const totalVisaSpan = document.getElementById('total-visa');
+        const totalMastercardSpan = document.getElementById('total-mastercard');
+        const filtroCategoriaSelect = document.getElementById('filtro-categoria');
+        
+        let gastos = [];
+        let gastosChart;
+
+        // Inicializa el gráfico
+        function inicializarGrafico() {
+            const ctx = document.getElementById('gastosChart').getContext('2d');
+            gastosChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Gastos por Categoría',
+                        data: [],
+                        backgroundColor: ['#4CAF50', '#007bff', '#ffc107', '#dc3545', '#17a2b8']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(tooltipItem) {
+                                    let label = tooltipItem.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    const value = tooltipItem.raw;
+                                    return label + new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function actualizarGrafico(gastosFiltrados) {
+            const gastosPorCategoria = gastosFiltrados.reduce((acc, gasto) => {
+                acc[gasto.categoria] = (acc[gasto.categoria] || 0) + gasto.monto;
+                return acc;
+            }, {});
+
+            gastosChart.data.labels = Object.keys(gastosPorCategoria);
+            gastosChart.data.datasets[0].data = Object.values(gastosPorCategoria);
+            gastosChart.update();
+        }
+
+        metodoPagoSelect.addEventListener('change', function() {
+            if (metodoPagoSelect.value === 'visa' || metodoPagoSelect.value === 'mastercard') {
+                cuotasSelect.style.display = 'block';
+            } else {
+                cuotasSelect.style.display = 'none';
+            }
+        });
+
+        filtroCategoriaSelect.addEventListener('change', renderizarGastos);
+
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('pay-button')) {
+                const gastoId = event.target.dataset.id;
+                const gasto = gastos.find(g => g.id === gastoId);
+                if (gasto && gasto.cuotasPagadas < gasto.cuotas) {
+                    gasto.cuotasPagadas++;
+                    guardarGastos();
+                    renderizarGastos();
+                }
+            }
+            if (event.target.classList.contains('delete-button')) {
+                const gastoId = event.target.dataset.id;
+                gastos = gastos.filter(g => g.id !== gastoId);
+                guardarGastos();
+                renderizarGastos();
+            }
+        });
+
+        function renderizarGastos() {
+            const filtroCategoria = filtroCategoriaSelect.value;
+            const gastosFiltrados = filtroCategoria === 'todos' ? gastos : gastos.filter(gasto => gasto.categoria === filtroCategoria);
+
+            listaEfectivo.innerHTML = '';
+            listaVisa.innerHTML = '';
+            listaMastercard.innerHTML = '';
+            
+            let totalEfectivo = 0;
+            let totalVisa = 0;
+            let totalMastercard = 0;
+
+            gastosFiltrados.forEach(gasto => {
+                const nuevoGasto = document.createElement('li');
+                nuevoGasto.classList.add('gasto-item');
+                
+                // Botón de eliminar
+                const deleteButton = document.createElement('button');
+                deleteButton.classList.add('delete-button');
+                deleteButton.innerHTML = '&times;';
+                deleteButton.dataset.id = gasto.id;
+                nuevoGasto.appendChild(deleteButton);
+
+                if (gasto.metodoPago === 'efectivo') {
+                    nuevoGasto.innerHTML += `
+                        <div class="gasto-header">
+                            <strong>${gasto.descripcion}</strong>
+                            <span>$${gasto.monto.toFixed(2)}</span>
+                        </div>
+                        <div class="gasto-details">Categoría: ${gasto.categoria}</div>
+                    `;
+                    listaEfectivo.appendChild(nuevoGasto);
+                    totalEfectivo += gasto.monto;
+                } else {
+                    const montoCuota = gasto.monto / gasto.cuotas;
+                    
+                    nuevoGasto.innerHTML += `
+                        <div class="gasto-header">
+                            <strong>${gasto.descripcion}</strong>
+                            <span>$${gasto.monto.toFixed(2)}</span>
+                        </div>
+                        <div class="gasto-details">
+                            Categoría: ${gasto.categoria} - ${gasto.cuotas} cuotas de $${montoCuota.toFixed(2)}
+                        </div>
+                        <div class="cuotas-info">
+                            Cuotas pagadas: ${gasto.cuotasPagadas} de ${gasto.cuotas}
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: ${(gasto.cuotasPagadas / gasto.cuotas) * 100}%"></div>
+                        </div>
+                    `;
+
+                    if (gasto.cuotasPagadas < gasto.cuotas) {
+                         const pagarButton = document.createElement('button');
+                         pagarButton.classList.add('pay-button');
+                         pagarButton.textContent = 'Pagar Cuota';
+                         pagarButton.dataset.id = gasto.id;
+                         nuevoGasto.appendChild(pagarButton);
+                    }
+                    
+                    if (gasto.metodoPago === 'visa') {
+                        listaVisa.appendChild(nuevoGasto);
+                        totalVisa += gasto.monto;
+                    } else if (gasto.metodoPago === 'mastercard') {
+                        listaMastercard.appendChild(nuevoGasto);
+                        totalMastercard += gasto.monto;
+                    }
+                }
+            });
+
+            totalEfectivoSpan.textContent = totalEfectivo.toFixed(2);
+            totalVisaSpan.textContent = totalVisa.toFixed(2);
+            totalMastercardSpan.textContent = totalMastercard.toFixed(2);
+            
+            actualizarGrafico(gastosFiltrados);
+        }
+
+        function guardarGastos() {
+            localStorage.setItem('gastos', JSON.stringify(gastos));
+        }
+
+        function cargarGastos() {
+            const gastosGuardados = localStorage.getItem('gastos');
+            if (gastosGuardados) {
+                gastos = JSON.parse(gastosGuardados);
+                gastos = gastos.map(gasto => ({
+                    ...gasto,
+                    id: gasto.id || Math.random().toString(36).substr(2, 9),
+                    cuotasPagadas: gasto.cuotasPagadas || 0
+                }));
+            }
+            inicializarGrafico();
+            renderizarGastos();
+        }
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault(); 
+
+            const descripcion = document.getElementById('descripcion').value;
+            const monto = parseFloat(document.getElementById('monto').value);
+            const categoria = document.getElementById('categoria').value;
+            const metodoPago = document.getElementById('metodo-pago').value;
+            const cuotas = parseInt(document.getElementById('cuotas').value) || 1;
+
+            if (descripcion && !isNaN(monto)) {
+                const nuevoGasto = {
+                    id: Math.random().toString(36).substr(2, 9),
+                    descripcion,
+                    monto,
+                    categoria,
+                    metodoPago,
+                    cuotas,
+                    cuotasPagadas: 0
+                };
+                gastos.push(nuevoGasto);
+                guardarGastos(); 
+                renderizarGastos(); 
+                form.reset(); 
+            }
+        });
+
+        cargarGastos();
+    </script>
+
+</body>
+</html>
